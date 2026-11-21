@@ -113,6 +113,55 @@ thead th {
     color: #738197;
     font-size: 14px;
 }
+ 
+
+/* スマホ用のデザイン */
+@media screen and (max-width: 600px) {
+
+    table {
+        width: 94%;
+        margin: 30px auto;
+        table-layout: fixed;
+    }
+
+    th, td {
+        padding: 12px 8px;
+        font-size: 13px;
+        white-space: nowrap;
+        
+    }
+
+    th:first-child {
+        width: 50%;
+    }
+
+    h1 {
+        font-size: 25px;
+    }
+
+    .search-box,
+    .sort-box,
+    .count-box {
+        width: 94%;
+    }
+}
+
+@media screen and (max-width: 600px) {
+    table {
+        width: max-content;
+        min-width: 94%;
+        table-layout: auto;
+    }
+
+    th, td {
+        white-space: nowrap;
+    }
+}
+
+.table-scroll {
+    width: 100%;
+    overflow-x: auto;
+}
 
 </style>
 
@@ -144,6 +193,7 @@ thead th {
     </button>
 </div>
 
+<div class="table-scroll">
 <table>
     <thead>
         <tr>
@@ -172,6 +222,7 @@ thead th {
 
     </tbody>
 </table>
+</div>
 
 
 
