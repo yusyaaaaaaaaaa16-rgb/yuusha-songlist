@@ -196,6 +196,85 @@ thead th {
         width: 94%;
     }
 }
+
+/* 全体を少しコンパクトにする */
+
+h1 {
+    font-size: 30px;
+    margin-top: 45px;
+}
+
+p {
+    font-size: 13px;
+}
+
+table {
+    max-width: 900px;
+    margin-top: 30px;
+}
+
+th, td {
+    font-size: 14px;
+    padding: 12px 15px;
+}
+
+.search-box {
+    max-width: 900px;
+    margin-top: 30px;
+}
+
+.search-box input {
+    font-size: 14px;
+    padding: 12px;
+}
+
+.sort-box,
+.count-box {
+    max-width: 900px;
+}
+
+
+/* スマホではさらにコンパクトにする */
+
+@media screen and (max-width: 600px) {
+
+    h1 {
+        font-size: 21px;
+        margin-top: 35px;
+    }
+
+    p {
+        font-size: 12px;
+    }
+
+    th, td {
+        font-size: 12px;
+        padding: 10px 12px;
+        white-space: nowrap;
+    }
+
+    .search-box input {
+        font-size: 13px;
+        padding: 11px;
+    }
+
+    .sort-box button {
+        font-size: 12px;
+        padding: 8px 12px;
+    }
+}
+
+/* パソコンでは全体を90%に縮小 */
+body {
+    zoom: 0.9;
+}
+
+/* スマホでは全体を80%に縮小 */
+@media screen and (max-width: 600px) {
+    body {
+        zoom: 0.8;
+    }
+}
 </style>
 
 </head>
