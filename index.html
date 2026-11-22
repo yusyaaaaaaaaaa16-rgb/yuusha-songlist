@@ -275,6 +275,30 @@ body {
         zoom: 0.8;
     }
 }
+/* アーティスト選択欄 */
+
+.artist-box {
+    width: 80%;
+    max-width: 820px;
+    margin: 15px auto;
+}
+
+.artist-box select {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    color: #25364b;
+    background-color: white;
+    border: 1px solid #d9e0e9;
+    border-radius: 8px;
+}
+
+/* スマホ用 */
+@media screen and (max-width: 600px) {
+    .artist-box {
+        width: 94%;
+    }
+}
 </style>
 
 </head>
@@ -295,6 +319,11 @@ body {
 
 
 <div class="count-box">
+    <div class="artist-box">
+    <select id="artistFilter">
+        <option value="">すべてのアーティスト</option>
+    </select>
+</div>
     <span id="songCount">曲数を読み込み中...</span>
 </div>
 
@@ -346,7 +375,7 @@ const searchInput = document.getElementById("searchInput");
 const sortButton = document.getElementById("sortButton");
 const songList = document.getElementById("songList");
 const songCount = document.getElementById("songCount");
-
+const artistFilter = document.getElementById("artistFilter");
 
 let allSongs = [];
 let sorted = false;
@@ -402,7 +431,11 @@ function displaySongs() {
     song.artistReading
 );
 
-        return text.includes(keyword);
+        return text.includes(keyword) &&
+    (
+        artistFilter.value === "" ||
+        song.artist === artistFilter.value
+    );
     });
 
 if (keyword === "") {
@@ -486,7 +519,26 @@ allSongs = rows.slice(1).map(function(row) {
     return song.title !== "" && song.artist !== "";
 });
 
+// アーティスト一覧を作成
+const artists = [...new Set(
+    allSongs.map(song => song.artist)
+)].sort((a, b) => a.localeCompare(b, "ja"));
 
+artistFilter.replaceChildren();
+
+const allOption = document.createElement("option");
+allOption.value = "";
+allOption.textContent = "すべてのアーティスト";
+artistFilter.appendChild(allOption);
+
+artists.forEach(function(artist) {
+    const option = document.createElement("option");
+    option.value = artist;
+    option.textContent = artist;
+    artistFilter.appendChild(option);
+});
+
+// 曲を画面に表示する
         displaySongs();
 
     } catch (error) {
@@ -497,6 +549,7 @@ allSongs = rows.slice(1).map(function(row) {
 
 // 検索機能
 searchInput.addEventListener("input", displaySongs);
+artistFilter.addEventListener("change", displaySongs);
 
 // 50音順の切り替え
 sortButton.addEventListener("click", function() {
