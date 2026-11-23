@@ -299,6 +299,136 @@ body {
         width: 94%;
     }
 }
+/* タブのデザイン */
+
+.tab-bar {
+    display: flex;
+    width: 80%;
+    max-width: 820px;
+    margin: 35px auto 0;
+    border-bottom: 1px solid #d9e0e9;
+}
+
+.tab-button {
+    flex: 1;
+    padding: 14px 10px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #738197;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.tab-button.active {
+    color: #253C61;
+    border-bottom-color: #253C61;
+    font-weight: bold;
+}
+
+.tab-panel[hidden] {
+    display: none;
+}
+
+.tab-panel .search-box,
+.tab-panel .artist-box {
+    margin-top: 20px;
+}
+
+
+/* スマホ用 */
+@media screen and (max-width: 600px) {
+
+    .tab-bar {
+        width: 94%;
+    }
+
+    .tab-button {
+        font-size: 13px;
+        padding: 12px 5px;
+    }
+}
+/* 新しいアーティスト選択欄 */
+
+.artist-box {
+    position: relative;
+}
+
+.artist-box select[hidden] {
+    display: none;
+}
+
+.artist-select-button {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 15px;
+
+    background-color: white;
+    color: #25364b;
+    border: 1px solid #d9e0e9;
+    border-radius: 8px;
+
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.artist-button-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.artist-options {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    box-sizing: border-box;
+
+    background-color: white;
+    border: 1px solid #d9e0e9;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px #00000015;
+    z-index: 30;
+}
+
+.artist-options[hidden] {
+    display: none;
+}
+
+.artist-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+    padding: 12px 15px;
+
+    border: none;
+    background-color: white;
+    color: #25364b;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.artist-option:hover,
+.artist-option:focus-visible {
+    background-color: #EEF3F9;
+}
+
+.artist-option-count {
+    color: #98a6b9;
+    font-size: 12px;
+    flex-shrink: 0;
+}
 </style>
 
 </head>
@@ -309,25 +439,70 @@ body {
     <p>気になる曲があったら、配信で気軽にリクエストしてください。</p>
 
 
-<div class="search-box">
-    <input
-        type="search"
-        id="searchInput"
-        placeholder="曲名・アーティスト名で検索"
-    >
+<!-- タブ切り替え -->
+<div class="tab-bar">
+    <button id="songsTab" class="tab-button active" type="button">
+        曲一覧
+    </button>
+
+    <button id="artistsTab" class="tab-button" type="button">
+        アーティスト別
+    </button>
 </div>
 
 
-<div class="count-box">
+<!-- 曲一覧タブ -->
+<div id="songsPanel" class="tab-panel">
+
+    <div class="search-box">
+        <input
+            type="search"
+            id="searchInput"
+            placeholder="曲名・アーティスト名で検索"
+        >
+    </div>
+
+</div>
+
+
+<!-- アーティスト別タブ -->
+<div id="artistsPanel" class="tab-panel" hidden>
+
     <div class="artist-box">
-    <select id="artistFilter">
-        <option value="">すべてのアーティスト</option>
-    </select>
+
+    <!-- 絞り込み用のデータ -->
+    <select id="artistFilter" hidden></select>
+
+    <!-- 選択欄 -->
+    <button
+        type="button"
+        id="artistSelectButton"
+        class="artist-select-button"
+        aria-expanded="false"
+        aria-controls="artistOptions"
+    >
+        <span id="selectedArtistName">
+    --- アーティストを選択 ---
+</span>
+
+        <span class="artist-button-right">
+            <span id="selectedArtistCount" class="artist-option-count"></span>
+            <span>▾</span>
+        </span>
+    </button>
+
+    <!-- アーティスト一覧 -->
+    <div id="artistOptions" class="artist-options" hidden></div>
+
 </div>
+
+</div>
+
+
+<!-- 曲数表示 -->
+<div class="count-box">
     <span id="songCount">曲数を読み込み中...</span>
 </div>
-
-    
 <div class="sort-box">
     <button id="sortButton">
         曲名を50音順にする
@@ -376,6 +551,16 @@ const sortButton = document.getElementById("sortButton");
 const songList = document.getElementById("songList");
 const songCount = document.getElementById("songCount");
 const artistFilter = document.getElementById("artistFilter");
+const artistSelectButton = document.getElementById("artistSelectButton");
+const artistOptions = document.getElementById("artistOptions");
+
+const selectedArtistName = document.getElementById("selectedArtistName");
+const selectedArtistCount = document.getElementById("selectedArtistCount");
+const songsTab = document.getElementById("songsTab");
+const artistsTab = document.getElementById("artistsTab");
+
+const songsPanel = document.getElementById("songsPanel");
+const artistsPanel = document.getElementById("artistsPanel");
 
 let allSongs = [];
 let sorted = false;
@@ -421,6 +606,22 @@ function parseCSV(csv) {
 
 // 曲を画面に表示する
 function displaySongs() {
+    // アーティストが選択されているか確認
+const waitingForArtist =
+    !artistsPanel.hidden && artistFilter.value === "";
+
+// 未選択の場合は表を非表示にする
+document.querySelector(".table-scroll").hidden = waitingForArtist;
+document.querySelector(".sort-box").hidden = waitingForArtist;
+
+if (waitingForArtist) {
+
+    songList.replaceChildren();
+
+    songCount.textContent = "アーティストを選択してください";
+
+    return;
+}
     const keyword = normalizeText(searchInput.value);
 
     let songs = allSongs.filter(function(song) {
@@ -434,27 +635,34 @@ function displaySongs() {
         return text.includes(keyword) &&
     (
         artistFilter.value === "" ||
-        song.artist === artistFilter.value
+        getMainArtist(song.artist) === artistFilter.value
     );
     });
 
-if (keyword === "") {
-    songCount.textContent = "全" + allSongs.length + "曲";
+if (keyword === "" && artistFilter.value === "") {
+
+    songCount.textContent =
+        "全" + allSongs.length + "曲";
+
 } else {
+
     songCount.textContent =
         "検索結果：" + songs.length +
         "曲 / 全" + allSongs.length + "曲";
+
 }
 
 
     if (sorted) {
-        songs.sort(function(a, b) {
-            return (a.reading || a.title).localeCompare(
-                b.reading || b.title,
-                "ja"
-            );
-        });
-    }
+    songs.sort(function(a, b) {
+
+        return compareJapaneseReading(
+            a.reading || a.title,
+            b.reading || b.title
+        );
+
+    });
+}
 
     songList.replaceChildren();
 
@@ -520,26 +728,93 @@ allSongs = rows.slice(1).map(function(row) {
 });
 
 // アーティスト一覧を作成
+// アーティストを読み仮名の50音順に並び替える
 const artists = [...new Set(
-    allSongs.map(song => song.artist)
-)].sort((a, b) => a.localeCompare(b, "ja"));
+allSongs.map(song => getMainArtist(song.artist))
+)].sort(function(a, b) {
 
-artistFilter.replaceChildren();
+    // アーティストAの読み仮名
+    const songA = allSongs.find(song => getMainArtist(song.artist) === a);
+    const readingA = songA.artistReading || a;
 
-const allOption = document.createElement("option");
-allOption.value = "";
-allOption.textContent = "すべてのアーティスト";
-artistFilter.appendChild(allOption);
+    // アーティストBの読み仮名
+    const songB = allSongs.find(song => getMainArtist(song.artist) === b);
+    const readingB = songB.artistReading || b;
 
-artists.forEach(function(artist) {
-    const option = document.createElement("option");
-    option.value = artist;
-    option.textContent = artist;
-    artistFilter.appendChild(option);
+    // 読み仮名で比較する
+    return normalizeText(readingA).localeCompare(
+        normalizeText(readingB),
+        "ja"
+    );
 });
 
-// 曲を画面に表示する
+artistFilter.replaceChildren();
+artistOptions.replaceChildren();
+
+
+// アーティストの選択肢を追加する
+function addArtistChoice(name, count, value) {
+
+    // 絞り込み用の選択肢
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = name;
+    artistFilter.appendChild(option);
+
+    // 画面に表示するボタン
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "artist-option";
+
+    const nameSpan = document.createElement("span");
+    nameSpan.textContent = name;
+
+    const countSpan = document.createElement("span");
+    countSpan.className = "artist-option-count";
+    countSpan.textContent = count;
+
+    button.appendChild(nameSpan);
+    button.appendChild(countSpan);
+
+    // アーティストを選択したとき
+    button.addEventListener("click", function() {
+
+        artistFilter.value = value;
+
+        selectedArtistName.textContent = name;
+        selectedArtistCount.textContent = count;
+
+        artistOptions.hidden = true;
+        artistSelectButton.setAttribute("aria-expanded", "false");
+
         displaySongs();
+    });
+
+    artistOptions.appendChild(button);
+}
+
+
+// すべてのアーティスト
+addArtistChoice(
+    "--- アーティストを選択 ---",
+    "",
+    ""
+);
+
+
+// 各アーティスト
+artists.forEach(function(artist) {
+
+    const count = allSongs.filter(function(song) {
+        return getMainArtist(song.artist) === artist;
+    }).length;
+
+    addArtistChoice(artist, count, artist);
+});
+
+selectedArtistCount.textContent = "";
+
+displaySongs();
 
     } catch (error) {
         console.error(error);
@@ -550,6 +825,81 @@ artists.forEach(function(artist) {
 // 検索機能
 searchInput.addEventListener("input", displaySongs);
 artistFilter.addEventListener("change", displaySongs);
+// アーティスト一覧を開閉する
+artistSelectButton.addEventListener("click", function() {
+
+    artistOptions.hidden = !artistOptions.hidden;
+
+    artistSelectButton.setAttribute(
+        "aria-expanded",
+        String(!artistOptions.hidden)
+    );
+});
+
+
+// 選択欄の外をクリックしたら閉じる
+document.addEventListener("click", function(event) {
+
+    if (!event.target.closest(".artist-box")) {
+
+        artistOptions.hidden = true;
+
+        artistSelectButton.setAttribute(
+            "aria-expanded",
+            "false"
+        );
+    }
+});
+
+
+// Escapeキーでも閉じられるようにする
+artistOptions.addEventListener("keydown", function(event) {
+
+    if (event.key === "Escape") {
+
+        artistOptions.hidden = true;
+        artistSelectButton.setAttribute("aria-expanded", "false");
+        artistSelectButton.focus();
+    }
+});
+// タブ切り替え機能
+function switchTab(tab) {
+
+    const isArtistTab = tab === "artists";
+
+    // 表示するタブを切り替える
+    songsPanel.hidden = isArtistTab;
+    artistsPanel.hidden = !isArtistTab;
+
+    // 選択中のタブのデザインを変更
+    songsTab.classList.toggle("active", !isArtistTab);
+    artistsTab.classList.toggle("active", isArtistTab);
+
+    // 切り替え時に検索条件をリセット
+    if (isArtistTab) {
+        searchInput.value = "";
+    } else {
+    artistFilter.value = "";
+
+    selectedArtistName.textContent = "--- アーティストを選択 ---";
+    selectedArtistCount.textContent = "";
+}
+
+artistOptions.hidden = true;
+artistSelectButton.setAttribute("aria-expanded", "false");
+
+    displaySongs();
+}
+
+// 曲一覧タブ
+songsTab.addEventListener("click", function() {
+    switchTab("songs");
+});
+
+// アーティスト別タブ
+artistsTab.addEventListener("click", function() {
+    switchTab("artists");
+});
 
 // 50音順の切り替え
 sortButton.addEventListener("click", function() {
@@ -565,6 +915,62 @@ sortButton.addEventListener("click", function() {
 // 最初に曲を読み込む
 loadSongs();
 
+// feat.が付いたアーティストをまとめる
+function getMainArtist(artist) {
+
+    return artist
+        .split(/\s+feat[.．]?\s*/i)[0]
+        .trim();
+
+}
+// 濁点・半濁点を考慮した50音順
+function compareJapaneseReading(textA, textB) {
+
+    const a = Array.from(normalizeText(textA).normalize("NFC"));
+    const b = Array.from(normalizeText(textB).normalize("NFC"));
+
+    // 濁点・半濁点の優先順位
+    function markOrder(char) {
+
+        const normalized = char.normalize("NFD");
+
+        if (normalized.includes("\u309A")) {
+            return 2; // 半濁点
+        }
+
+        if (normalized.includes("\u3099")) {
+            return 1; // 濁点
+        }
+
+        return 0; // 濁点なし
+    }
+
+    // 文字を先頭から比較する
+    for (let i = 0; i < Math.max(a.length, b.length); i++) {
+
+        if (i >= a.length) return -1;
+        if (i >= b.length) return 1;
+
+        const charA = a[i].normalize("NFD");
+        const charB = b[i].normalize("NFD");
+
+        // まず濁点を除いた文字を比較
+        const result = charA[0].localeCompare(charB[0], "ja");
+
+        if (result !== 0) {
+            return result;
+        }
+
+        // 同じ文字なら濁点の有無を比較
+        const markResult = markOrder(a[i]) - markOrder(b[i]);
+
+        if (markResult !== 0) {
+            return markResult;
+        }
+    }
+
+    return 0;
+}
 function normalizeText(text) {
     return text
         .normalize("NFKC")
