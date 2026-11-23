@@ -748,6 +748,20 @@ allSongs.map(song => getMainArtist(song.artist))
     );
 });
 
+// アーティストを曲数の多い順に並び替える
+artists.sort(function(a, b) {
+
+    const countA = allSongs.filter(function(song) {
+        return getMainArtist(song.artist) === a;
+    }).length;
+
+    const countB = allSongs.filter(function(song) {
+        return getMainArtist(song.artist) === b;
+    }).length;
+
+    return countB - countA;
+});
+
 artistFilter.replaceChildren();
 artistOptions.replaceChildren();
 
